@@ -38,7 +38,7 @@ stage name:'deploy[development]', concurrency:1
     node{
         unstash 'source'
         def octool = tool name: 'oc', type: 'com.cloudbees.plugins.openshift.OpenShiftClient'
-        sh "${octool}/bin/oc --version"
+        sh "oc -version"
         wrap([$class: 'OpenShiftBuildWrapper', url: OS_URL, credentialsId: OS_CREDS_DEV, insecure: true]) {
             oc('project mobile-development -q')
 
