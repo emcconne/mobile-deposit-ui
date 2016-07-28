@@ -29,7 +29,8 @@ stage 'build'
     }
         
 stage 'test[unit&quality]'
-    parallel 'unit-test': {
+    parallel \
+    'unit-test': {
         node {
             unstash 'source'
             sh 'mvn -Dmaven.test.failure.ignore=true test'
@@ -38,7 +39,8 @@ stage 'test[unit&quality]'
                 error "Unit test failures"
             }
         }
-    }, 'quality-test': {
+    }, 
+    'quality-test': {
         node {
             unstash 'source'
             sh 'mvn sonar:sonar'
