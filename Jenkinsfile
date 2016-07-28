@@ -5,20 +5,18 @@ import groovy.json.JsonSlurper
 * The following parameters are used in this pipeline (thus available as groovy variables via Jenkins job parameters):
 */
 
-// properties([
-//     [$class: 'ParametersDefinitionProperty', 
-//        parameterDefinitions: [
-//            [name: 'OS_URL', $class: 'StringParameterDefinition', defaultValue: 'https://api.cloudbees.openshift.com/', description: 'URL for your OpenShift v3 API instance'], 
-//            [name: 'OS_CREDS_DEV', $class: 'CredentialsParameterDefinition', credentialType: 'com.cloudbees.plugins.credentials.common.StandardCredentials', defaultValue: 'mobile-development-default-openshift-token', description: 'credentials for your development project, either user name / password or OAuth token'], 
+properties([
+     [$class: 'ParametersDefinitionProperty', 
+        parameterDefinitions: [
+            [name: 'OS_URL', $class: 'StringParameterDefinition', defaultValue: 'https://10.2.2.2:8443/', description: 'URL for your OpenShift v3 API instance'], 
+            [name: 'OS_CREDS_DEV', $class: 'CredentialsParameterDefinition', credentialType: 'com.cloudbees.plugins.credentials.common.StandardCredentials', defaultValue: 'mobile-development-default-openshift-token', description: 'credentials for your development project, either user name / password or OAuth token'], 
 //            [name: 'OS_CREDS_TEST', $class: 'CredentialsParameterDefinition', credentialType: 'com.cloudbees.plugins.credentials.common.StandardCredentials', defaultValue: 'mobile-test-deployer-openshift-token', description: 'credentials for your test project'], 
 //            [name: 'OS_CREDS_PROD', $class: 'CredentialsParameterDefinition', credentialType: 'com.cloudbees.plugins.credentials.common.StandardCredentials', defaultValue: 'mobile-production-deployer-openshift-token', description: 'credentials for your production project'],
 //            [name: 'SAUCE_CREDS', $class: 'CredentialsParameterDefinition', credentialType: 'com.cloudbees.plugins.credentials.common.StandardCredentials', defaultValue: 'sauce-api-creds', description: 'credentials for your saucelabs'], 
 //            [name: 'OS_BUILD_LOG', $class: 'ChoiceParameterDefinition', choices: 'follow\nwait', description: 'how to handle output of start-build command, either wait or follow']
-//         ]
-//    ], [$class: 'BuildDiscarderProperty',
-//         strategy: [$class: 'LogRotator', numToKeepStr: '10', artifactNumToKeepStr: '10']
-//     ]
-// ])
+        ]], 
+    	[$class: 'BuildDiscarderProperty', strategy: [$class: 'LogRotator', numToKeepStr: '10', artifactNumToKeepStr: '10']]
+])
 
 stage 'build'
     node{
@@ -46,24 +44,25 @@ stage 'test[unit&quality]'
             sh 'mvn sonar:sonar'
         } 
     }
-// stage name:'deploy[development]', concurrency:1
-//     node{
-//         unstash 'source'
-//         wrap([$class: 'OpenShiftBuildWrapper', url: OS_URL, credentialsId: OS_CREDS_DEV, insecure: true]) {
-//             oc('project mobile-development -q')
 
-//             def bc = oc('get bc -o json')
-//             if(!bc.items) {
-//             	//TODO still a branch problem here
-//                 oc("new-app --name=mobile-deposit-ui --code='.' --image-stream=jboss-webserver30-tomcat8-openshift")
-//                 wait('app=mobile-deposit-ui', 7, 'MINUTES')
-//                 oc('expose service mobile-deposit-ui')
-//             } else {
-//                 oc("start-build mobile-deposit-ui --from-dir=. --$OS_BUILD_LOG")
-//             }
-//         }
-//     }
-//     checkpoint 'deploy[development]-complete'
+stage name:'deploy[development]', concurrency:1
+    node{
+        unstash 'source'
+        wrap([$class: 'OpenShiftBuildWrapper', url: OS_URL, credentialsId: OS_CREDS_DEV, insecure: true]) {
+            oc('project mobile-development -q')
+
+            def bc = oc('get bc -o json')
+            if(!bc.items) {
+            	//TODO still a branch problem here
+                oc("new-app --name=mobile-deposit-ui --code='.' --image-stream=jboss-webserver30-tomcat8-openshift")
+                wait('app=mobile-deposit-ui', 7, 'MINUTES')
+                oc('expose service mobile-deposit-ui')
+            } else {
+                oc("start-build mobile-deposit-ui --from-dir=. --$OS_BUILD_LOG")
+            }
+        }
+    }
+    checkpoint 'deploy[development]-complete'
 
 // stage name:'deploy[test]', concurrency:1
 //     mail to: 'apemberton@cloudbees.com', subject: "Deploy mobile-deposit-ui version #${env.BUILD_NUMBER} to test?",
@@ -130,6 +129,7 @@ stage 'test[unit&quality]'
 * 
 * @see: https://docs.openshift.com/enterprise/3.0/cli_reference/index.html 
 */
+
 def oc(cmd){
     def output
     sh "set -o pipefail"
