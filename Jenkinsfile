@@ -14,8 +14,7 @@ properties([
 //            [name: 'OS_CREDS_PROD', $class: 'CredentialsParameterDefinition', credentialType: 'com.cloudbees.plugins.credentials.common.StandardCredentials', defaultValue: 'mobile-production-deployer-openshift-token', description: 'credentials for your production project'],
 //            [name: 'SAUCE_CREDS', $class: 'CredentialsParameterDefinition', credentialType: 'com.cloudbees.plugins.credentials.common.StandardCredentials', defaultValue: 'sauce-api-creds', description: 'credentials for your saucelabs'], 
 //            [name: 'OS_BUILD_LOG', $class: 'ChoiceParameterDefinition', choices: 'follow\nwait', description: 'how to handle output of start-build command, either wait or follow']
-        ]], 
-    	[$class: 'BuildDiscarderProperty', strategy: [$class: 'LogRotator', numToKeepStr: '10', artifactNumToKeepStr: '10']]
+        ]]
 ])
 
 stage 'build'
