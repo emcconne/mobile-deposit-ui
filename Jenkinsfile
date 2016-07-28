@@ -5,7 +5,6 @@ import groovy.json.JsonSlurper
 * The following parameters are used in this pipeline (thus available as groovy variables via Jenkins job parameters):
 */
 
-def octool = tool name: 'oc', type: 'com.cloudbees.plugins.openshift.OpenShiftClient'
 
 stage 'build'
     node{
@@ -125,6 +124,7 @@ stage name:'deploy[development]', concurrency:1
 def oc(cmd){
     def output
     sh "set -o pipefail"
+	def octool = tool name: 'oc', type: 'com.cloudbees.plugins.openshift.OpenShiftClient'
     sh "${octool}/oc $cmd 2>&1 | tee output.jenkins"
     output = readFile 'output.jenkins'
     if(output.startsWith('{')){
