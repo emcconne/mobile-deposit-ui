@@ -124,7 +124,7 @@ stage name:'deploy[development]', concurrency:1
 def oc(cmd){
     def output
     sh "set -o pipefail"
-    sh "oc $cmd 2>&1 | tee output.jenkins"
+    sh "${octool}/oc $cmd 2>&1 | tee output.jenkins"
     output = readFile 'output.jenkins'
     if(output.startsWith('{')){
         output = new JsonSlurper().parseText(output)
