@@ -4,12 +4,12 @@ import groovy.json.JsonSlurper
 /**
 * The following parameters are used in this pipeline (thus available as groovy variables via Jenkins job parameters):
 */
-properties [[$class: 'BuildDiscarderProperty', strategy: [$class: 'LogRotator', artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '2', numToKeepStr: '4']], [$class: 'ParametersDefinitionProperty', parameterDefinitions: [[$class: 'StringParameterDefinition', defaultValue: 'https://10.2.2.2:8443/', description: '', name: 'OC_URL'], [$class: 'CredentialsParameterDefinition', credentialType: 'com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl', defaultValue: 'da933727-7cad-438f-9fe8-2878a291e83f', description: '', name: 'OC_CREDS', required: false]]]]
+//properties [[$class: 'BuildDiscarderProperty', strategy: [$class: 'LogRotator', artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '2', numToKeepStr: '4']], [$class: 'ParametersDefinitionProperty', parameterDefinitions: [[$class: 'StringParameterDefinition', defaultValue: 'https://10.2.2.2:8443/', description: '', name: 'OC_URL'], [$class: 'CredentialsParameterDefinition', credentialType: 'com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl', defaultValue: 'da933727-7cad-438f-9fe8-2878a291e83f', description: '', name: 'OC_CREDS', required: false]]]]
 
 stage 'build'
     node{
         checkout scm
-        def anttool = tool 'ant'
+        tool name: 'ant', type: 'hudson.tasks.Ant$AntInstallation'
         sh 'mvn -DskipTests clean package'
         stash name: 'source', excludes: 'target/'
         archive includes: 'target/*.war'
@@ -37,7 +37,7 @@ stage 'build'
 stage name:'deploy[development]', concurrency:1
     node{
         unstash 'source'
-        def octool = tool 'oc'
+        def octool = tool name: 'oc', type: 'com.cloudbees.plugins.openshift.OpenShiftClient'
         sh "${octool}/bin/oc --version"
         wrap([$class: 'OpenShiftBuildWrapper', url: OS_URL, credentialsId: OS_CREDS_DEV, insecure: true]) {
             oc('project mobile-development -q')
