@@ -4,22 +4,12 @@ import groovy.json.JsonSlurper
 /**
 * The following parameters are used in this pipeline (thus available as groovy variables via Jenkins job parameters):
 */
-
-properties([
-     [$class: 'ParametersDefinitionProperty', 
-        parameterDefinitions: [
-            [name: 'OS_URL', $class: 'StringParameterDefinition', defaultValue: 'https://10.2.2.2:8443/', description: 'URL for your OpenShift v3 API instance'], 
-            [name: 'OS_CREDS_DEV', $class: 'CredentialsParameterDefinition', credentialType: 'com.cloudbees.plugins.credentials.common.StandardCredentials', defaultValue: 'mobile-development-default-openshift-token', description: 'credentials for your development project, either user name / password or OAuth token'], 
-//            [name: 'OS_CREDS_TEST', $class: 'CredentialsParameterDefinition', credentialType: 'com.cloudbees.plugins.credentials.common.StandardCredentials', defaultValue: 'mobile-test-deployer-openshift-token', description: 'credentials for your test project'], 
-//            [name: 'OS_CREDS_PROD', $class: 'CredentialsParameterDefinition', credentialType: 'com.cloudbees.plugins.credentials.common.StandardCredentials', defaultValue: 'mobile-production-deployer-openshift-token', description: 'credentials for your production project'],
-//            [name: 'SAUCE_CREDS', $class: 'CredentialsParameterDefinition', credentialType: 'com.cloudbees.plugins.credentials.common.StandardCredentials', defaultValue: 'sauce-api-creds', description: 'credentials for your saucelabs'], 
-//            [name: 'OS_BUILD_LOG', $class: 'ChoiceParameterDefinition', choices: 'follow\nwait', description: 'how to handle output of start-build command, either wait or follow']
-        ]]
-])
+properties [[$class: 'BuildDiscarderProperty', strategy: [$class: 'LogRotator', artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '2', numToKeepStr: '4']], [$class: 'ParametersDefinitionProperty', parameterDefinitions: [[$class: 'StringParameterDefinition', defaultValue: 'https://10.2.2.2:8443/', description: '', name: 'OC_URL'], [$class: 'CredentialsParameterDefinition', credentialType: 'com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl', defaultValue: 'da933727-7cad-438f-9fe8-2878a291e83f', description: '', name: 'OC_CREDS', required: false]]]]
 
 stage 'build'
     node{
         checkout scm
+        def anttool = tool 'ant'
         sh 'mvn -DskipTests clean package'
         stash name: 'source', excludes: 'target/'
         archive includes: 'target/*.war'
@@ -47,6 +37,8 @@ stage 'build'
 stage name:'deploy[development]', concurrency:1
     node{
         unstash 'source'
+        def octool = tool 'oc'
+        sh "${octool}/bin/oc --version"
         wrap([$class: 'OpenShiftBuildWrapper', url: OS_URL, credentialsId: OS_CREDS_DEV, insecure: true]) {
             oc('project mobile-development -q')
 
