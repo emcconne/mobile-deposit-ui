@@ -5,6 +5,7 @@ import groovy.json.JsonSlurper
 * The following parameters are used in this pipeline (thus available as groovy variables via Jenkins job parameters):
 */
 
+def octool = tool name: 'oc', type: 'com.cloudbees.plugins.openshift.OpenShiftClient'
 
 stage 'build'
     node{
@@ -37,7 +38,6 @@ stage 'build'
 stage name:'deploy[development]', concurrency:1
     node{
         unstash 'source'
-        def octool = tool name: 'oc', type: 'com.cloudbees.plugins.openshift.OpenShiftClient'
         oc('version')
         wrap([$class: 'OpenShiftBuildWrapper', url: 'https://10.2.2.2:8443' , credentialsId: 'da933727-7cad-438f-9fe8-2878a291e83f', insecure: true]) {
             oc('project mobile-development -q')
@@ -120,6 +120,7 @@ stage name:'deploy[development]', concurrency:1
 * 
 * @see: https://docs.openshift.com/enterprise/3.0/cli_reference/index.html 
 */
+
 
 def oc(cmd){
     def output
