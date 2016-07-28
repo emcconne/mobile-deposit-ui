@@ -37,10 +37,13 @@ stage 'build'
 stage name:'deploy[development]', concurrency:1
     node{
         unstash 'source'
-        oc('version')
-        wrap([$class: 'OpenShiftBuildWrapper', url: 'https://10.2.2.2:8443' , credentialsId: 'da933727-7cad-438f-9fe8-2878a291e83f', insecure: true]) {
+        wrap([$class: 'OpenShiftBuildWrapper', 
+        	installation: 'oc',
+        	url: 'https://10.2.2.2:8443' , 
+        	credentialsId: 'da933727-7cad-438f-9fe8-2878a291e83f', 
+        	insecure: true]) 
+        {
             oc('project mobile-development -q')
-
             def bc = oc('get bc -o json')
             if(!bc.items) {
             	//TODO still a branch problem here
@@ -124,8 +127,7 @@ stage name:'deploy[development]', concurrency:1
 def oc(cmd){
     def output
     sh "set -o pipefail"
-	def octool = tool name: 'oc', type: 'com.cloudbees.plugins.openshift.OpenShiftClient'
-    sh "${octool}/oc $cmd 2>&1 | tee output.jenkins"
+    sh "oc $cmd 2>&1 | tee output.jenkins"
     output = readFile 'output.jenkins'
     if(output.startsWith('{')){
         output = new JsonSlurper().parseText(output)
